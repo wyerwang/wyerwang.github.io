@@ -191,7 +191,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-07-11 14:44:58" itemprop="dateModified" datetime="2022-07-11T14:44:58+08:00">2022-07-11</time>
+      <time title="修改时间：2022-07-11 15:25:09" itemprop="dateModified" datetime="2022-07-11T15:25:09+08:00">2022-07-11</time>
     </span>
 
   
@@ -204,7 +204,17 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h3 id=""><a href="#" class="headerlink" title=""></a><img src = "https://github.com/wyerwang/wyerwang.github.io/blob/main/imgs/SSS.jpg?raw=true"></h3>
+          <img src = "https://github.com/wyerwang/wyerwang.github.io/blob/main/imgs/SSS.jpg?raw=true">
+
+<p>用视角方向点乘负的半角向量，模拟次表面散射<br>贴图采样Mask控制散射范围</p>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;&#x2F;SSS
+#ifdef _SSS
+    float3 viewDirWS &#x3D; GetWorldSpaceNormalizeViewDir(positionWS);
+    float subsurface &#x3D; max(dot(viewDirWS, -normalize(normalWS * _NormalInfluence + lightDir)), 0.001);
+    float subsurfaceMask &#x3D; lerp(1, SAMPLE_TEXTURE2D(_SSSMap, sampler_SSSMap, IN.uv).r, _SSSMaskBlend);
+    half3 SSSColor &#x3D; _SSSColor.rgb * pow(subsurface, _SSSFalloff) * _SSSIntensity * subsurfaceMask;
+    albedo +&#x3D; SSSColor;
+#endif<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
       
     </div>
 
@@ -266,7 +276,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-07-11 14:44:36" itemprop="dateModified" datetime="2022-07-11T14:44:36+08:00">2022-07-11</time>
+      <time title="修改时间：2022-07-11 15:12:46" itemprop="dateModified" datetime="2022-07-11T15:12:46+08:00">2022-07-11</time>
     </span>
 
   
@@ -279,12 +289,14 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <hr>
-<h3 id=""><a href="#" class="headerlink" title=""></a><img src = "https://github.com/wyerwang/wyerwang.github.io/blob/main/imgs/Trunk.jpg?raw=true"></h3><h5 id="左边是Unity默认的URP-Lit-右边是自己写的。"><a href="#左边是Unity默认的URP-Lit-右边是自己写的。" class="headerlink" title="左边是Unity默认的URP Lit, 右边是自己写的。"></a>左边是Unity默认的URP Lit, 右边是自己写的。</h5><hr>
-<h2 id="直接光照部分"><a href="#直接光照部分" class="headerlink" title="直接光照部分"></a><strong>直接光照部分</strong></h2><hr>
-</br>
+          <img src = "https://github.com/wyerwang/wyerwang.github.io/blob/main/imgs/Trunk.jpg?raw=true">
 
-<h3 id="1-漫反射："><a href="#1-漫反射：" class="headerlink" title="1. 漫反射："></a><strong>1. 漫反射：</strong></h3><pre class="line-numbers language-none"><code class="language-none">&#x2F;&#x2F; [Burley 2012, &quot;Physically-Based Shading at Disney&quot;]
+<p>左边是Unity默认的URP Lit, 右边是自己写的，好处就是可以自由魔改优化了。<br>为了优化把法线贴图改成了导数贴图，细节会有点损失，细微差距在移动端基本可以忽略。<br>既优化了计算量，又可以节省一张贴图。</p>
+<hr>
+<h4 id="直接光照部分"><a href="#直接光照部分" class="headerlink" title="直接光照部分"></a><strong>直接光照部分</strong></h4></br>
+
+<p><strong>1. 漫反射：</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;&#x2F; [Burley 2012, &quot;Physically-Based Shading at Disney&quot;]
 float3 Diffuse_Burley( float3 Albedo, float Roughness, float NoV, float NoL, float VoH )
 &#123;
     float FD90 &#x3D; 0.5 + 2 * VoH * VoH * Roughness;
@@ -298,17 +310,13 @@ float3 Diffuse_Burley( float3 Albedo, float Roughness, float NoV, float NoL, flo
 
 half KD &#x3D; dielectric.a - metallic * dielectric.a;
 half3 dirDiff &#x3D; albedo * KD;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
 </br>
 
-<hr>
-</br>
-
-<h3 id="2-镜面反射："><a href="#2-镜面反射：" class="headerlink" title="2. 镜面反射："></a><strong>2. 镜面反射：</strong></h3><p>镜面反射BRDF一般公式：</p>
-<h2 id="int-l-v-x3D-frac-D-h-F-v-h-G-l-v-h-4-n-cdot-l-n-cdot-v"><a href="#int-l-v-x3D-frac-D-h-F-v-h-G-l-v-h-4-n-cdot-l-n-cdot-v" class="headerlink" title="$\int(l,v)$ &#x3D; $\frac{D(h)F(v, h)G(l, v, h)}{4(n \cdot l)(n \cdot v)}$"></a>$\int(l,v)$ &#x3D; $\frac{D(h)F(v, h)G(l, v, h)}{4(n \cdot l)(n \cdot v)}$</h2><p>这里使用模拟近似：</p>
-<h3 id="roughness-0-25-0-25-D-F-x2F-4"><a href="#roughness-0-25-0-25-D-F-x2F-4" class="headerlink" title="(roughness * 0.25 + 0.25) * D * F &#x2F; 4"></a>(roughness * 0.25 + 0.25) * D * F &#x2F; 4</h3></br>
-
-<h3 id="2-1-D-法线分布函数-Normal-Distribution-Function-："><a href="#2-1-D-法线分布函数-Normal-Distribution-Function-：" class="headerlink" title="2.1 D 法线分布函数(Normal Distribution Function)："></a><strong>2.1 D 法线分布函数(Normal Distribution Function)：</strong></h3><p>微面元法线分布的概率，即正确朝向的法线密度，这里使用为移动端优化的GGX, 最后记得除以PI。</p>
+<p><strong>2. 镜面反射：</strong></p>
+<p>镜面反射BRDF一般公式：<br>$\int(l,v)$ &#x3D; $\frac{D(h)F(v, h)G(l, v, h)}{4(n \cdot l)(n \cdot v)}$</p>
+<p>这里使用模拟近似：<br>(roughness * 0.25 + 0.25) * D * F &#x2F; 4<br></br></p>
+<ul>
+<li><p><strong>D 法线分布函数(Normal Distribution Function)：</strong><br>微面元法线分布的概率，即正确朝向的法线密度，这里使用为移动端优化的GGX, 最后记得除以PI。</p>
 <pre class="line-numbers language-none"><code class="language-none">&#x2F;&#x2F;Mobile D (移动端GGX)
 #define MEDIUMP_FLT_MAX		65504.0
 #define MEDIUMP_FLT_MIN		0.00006103515625
@@ -324,8 +332,8 @@ half D_GGX_Mobile(half Roughness, float NoH)
     &#x2F;&#x2F; clamp to avoid overlfow in a bright env
     return min(d, 2048.0) &#x2F; PI;
 &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="2-2-F-菲涅尔-Fresnel-Equation-："><a href="#2-2-F-菲涅尔-Fresnel-Equation-：" class="headerlink" title="2.2 F 菲涅尔(Fresnel Equation)："></a><strong>2.2 F 菲涅尔(Fresnel Equation)：</strong></h3><p>不同光线与表面角度下，反射的光线所占比率(万物皆有菲涅尔)，使用Schlick。</p>
+</li>
+<li><p><strong>F 菲涅尔(Fresnel Equation)：</strong><br>不同光线与表面角度下，反射的光线所占比率(万物皆有菲涅尔)，使用Schlick。</p>
 <pre class="line-numbers language-none"><code class="language-none">&#x2F;&#x2F; [Schlick 1994, &quot;An Inexpensive BRDF Model for Physically-Based Rendering&quot;]
 float3 F_Schlick(float3 F0, float VoH)
 &#123;
@@ -339,24 +347,23 @@ float3 F_Schlick(float3 F0, float VoH)
 <p>F0 是光线垂直表面照射时，该光线的反射光为镜面反射的比率，折射到表面中的光则为1-F0。<br>大多数常见电介质的F0范围为0.02-0.05(线性值)，金属的F0范围为0.5-1.0。</p>
 <pre class="line-numbers language-none"><code class="language-none">#define  dielectric float4(0.04, 0.04, 0.04, 0.96)
 half3 F0 &#x3D; lerp(dielectric.rgb, albedo, metallic);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<h3 id="2-3-G-几何函数-Geometry-Function-："><a href="#2-3-G-几何函数-Geometry-Function-：" class="headerlink" title="2.3 G 几何函数(Geometry Function)："></a><strong>2.3 G 几何函数(Geometry Function)：</strong></h3><p>描述微平面自成阴影的属性，由于近似模拟，可以省去这一步计算。</p>
+</li>
+<li><p><strong>G 几何函数(Geometry Function)：</strong><br>描述微平面自成阴影的属性，由于近似模拟，可以省去这一步计算。</p>
+</li>
+</ul>
 </br>
 
-<hr>
-</br>
-
-<h3 id="3-直射光计算："><a href="#3-直射光计算：" class="headerlink" title="3. 直射光计算："></a><strong>3. 直射光计算：</strong></h3><pre class="line-numbers language-none"><code class="language-none">float D &#x3D; D_GGX_Mobile(NoH, roughness);
+<p><strong>3. 直射光计算：</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">float D &#x3D; D_GGX_Mobile(NoH, roughness);
 float3 F &#x3D; F_Schlick_UE(F0, VoH);
 
 half3 dirSpec &#x3D; (roughness * 0.25 + 0.25) * D * F &#x2F; 4;
 half3 dirColor &#x3D; (dirDiff + dirSpec) * NoL * lightColor * shadow;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
 </br>
 
-<hr>
-</br>
-
-<h3 id="4-多光源直接光照计算："><a href="#4-多光源直接光照计算：" class="headerlink" title="4. 多光源直接光照计算："></a><strong>4. 多光源直接光照计算：</strong></h3><pre class="line-numbers language-none"><code class="language-none">#ifdef _ADDITIONAL_LIGHTS
+<p><strong>4. 多光源直接光照计算：</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">#ifdef _ADDITIONAL_LIGHTS
 
     int lightsCount &#x3D; GetAdditionalLightsCount();
     half3 vertexLightColor &#x3D; half3(0, 0, 0);
@@ -390,15 +397,11 @@ half3 dirColor &#x3D; (dirDiff + dirSpec) * NoL * lightColor * shadow;<span aria
     dirColor +&#x3D; vertexLightColor;
 
 #endif<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-</br>
 
 <hr>
-</br>
+<h4 id="环境光照部分"><a href="#环境光照部分" class="headerlink" title="环境光照部分"></a><strong>环境光照部分</strong></h4></br>
 
-<h2 id="环境光照部分"><a href="#环境光照部分" class="headerlink" title="环境光照部分"></a><strong>环境光照部分</strong></h2><hr>
-</br>
-
-<h3 id="1-球谐光照："><a href="#1-球谐光照：" class="headerlink" title="1. 球谐光照："></a><strong>1. 球谐光照：</strong></h3><p>使用Unity的球谐函数，exposure控制亮度，envKD是环境光照漫反射系数。</p>
+<p><strong>1. 球谐光照：</strong><br>使用Unity的球谐函数，exposure控制亮度，envKD是环境光照漫反射系数。</p>
 <pre class="line-numbers language-none"><code class="language-none">float3 SampleSH(float3 normalWS)
 &#123;
     &#x2F;&#x2F; LPPV is not supported in Ligthweight Pipeline
@@ -416,12 +419,13 @@ half3 dirColor &#x3D; (dirDiff + dirSpec) * NoL * lightColor * shadow;<span aria
 
 half3 ambient &#x3D; SampleSH(N) * exposure;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h3 id="2-环境光照菲涅尔项："><a href="#2-环境光照菲涅尔项：" class="headerlink" title="2. 环境光照菲涅尔项："></a><strong>2. 环境光照菲涅尔项：</strong></h3><pre class="line-numbers language-none"><code class="language-none">half reflectivity &#x3D; half(1.0) - KD;
+<p><strong>2. 环境光照菲涅尔项：</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">half reflectivity &#x3D; half(1.0) - KD;
 float grazingTerm &#x3D; saturate(smoothness + reflectivity);
 half fresnelTerm &#x3D; Pow4(1.0 - NoV);
 float3 envKS &#x3D; F_Env(a2, F0, grazingTerm, fresnelTerm);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h3 id="3-预过滤环境贴图-Pre-filtered-environment-map"><a href="#3-预过滤环境贴图-Pre-filtered-environment-map" class="headerlink" title="3. 预过滤环境贴图(Pre-filtered environment map)"></a><strong>3. 预过滤环境贴图(Pre-filtered environment map)</strong></h3><p>借助预过滤环境贴图，用多级模糊的mipmap来存储模糊的环境高光。</p>
+<p><strong>3. 预过滤环境贴图(Pre-filtered environment map)</strong><br>借助预过滤环境贴图，用多级模糊的mipmap来存储模糊的环境高光。</p>
 <pre class="line-numbers language-none"><code class="language-none">float3 CubeLookup(float3 reflectDirWS, float roughness, float AO, float exposure)
 &#123;
     roughness &#x3D; roughness * (1.7 - 0.7 * roughness);
@@ -431,7 +435,8 @@ float3 envKS &#x3D; F_Env(a2, F0, grazingTerm, fresnelTerm);<span aria-hidden="t
     return color.rgb * exposure * AO;
 &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h3 id="4-环境BRDF-Environment-BRDF-，使用EnvBRDF的近似模拟。"><a href="#4-环境BRDF-Environment-BRDF-，使用EnvBRDF的近似模拟。" class="headerlink" title="4. 环境BRDF(Environment BRDF)，使用EnvBRDF的近似模拟。"></a><strong>4. 环境BRDF(Environment BRDF)，使用EnvBRDF的近似模拟。</strong></h3><pre class="line-numbers language-none"><code class="language-none">half2 EnvBRDFApproxLazarov(half Roughness, half NoV)
+<p><strong>4. 环境BRDF(Environment BRDF)，使用EnvBRDF的近似模拟。</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">half2 EnvBRDFApproxLazarov(half Roughness, half NoV)
 &#123;
     &#x2F;&#x2F; [ Lazarov 2013, &quot;Getting More Physical in Call of Duty: Black Ops II&quot; ]
     &#x2F;&#x2F; Adaptation to fit our G term.
@@ -454,7 +459,8 @@ half3 EnvBRDFApprox( half3 SpecularColor, half Roughness, half NoV )
     return SpecularColor * AB.x + F90 * AB.y;
 &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h3 id="5-环境光照计算："><a href="#5-环境光照计算：" class="headerlink" title="5. 环境光照计算："></a><strong>5. 环境光照计算：</strong></h3><pre class="line-numbers language-none"><code class="language-none">half3 envDiff &#x3D; albedo * ambient * envKD;
+<p><strong>5. 环境光照计算：</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">half3 envDiff &#x3D; albedo * ambient * envKD;
 
 float3 envSpecCube &#x3D; CubeLookup(R, perRoughness, occlusion, reflectExposure);
 float3 envSpecBRDF &#x3D; EnvBRDFApprox(F0, roughness, NoV);
@@ -463,12 +469,8 @@ half3 envSpec &#x3D; envSpecCube * envSpecBRDF;
 
 half3 envColor &#x3D; envDiff + envSpec;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-</br>
-
 <hr>
-</br>
-
-<h2 id="最终光照计算："><a href="#最终光照计算：" class="headerlink" title="最终光照计算："></a><strong>最终光照计算：</strong></h2><p>直接光和环境光结果相加即可</p>
+<h4 id="最终光照计算："><a href="#最终光照计算：" class="headerlink" title="最终光照计算："></a><strong>最终光照计算：</strong></h4><p>直接光和环境光结果相加即可</p>
 <pre class="line-numbers language-none"><code class="language-none">half3 color &#x3D; dirColor + envColor;
 
 return color;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>

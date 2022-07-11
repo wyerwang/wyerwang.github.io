@@ -116,7 +116,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">4</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -146,6 +146,125 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://wyerwang.github.io/2022/07/11/Fog%20%E5%9F%BA%E7%A1%80%E7%89%88/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="咸鱼">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="咸鱼的梦想">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 咸鱼的梦想">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/07/11/Fog%20%E5%9F%BA%E7%A1%80%E7%89%88/" class="post-title-link" itemprop="url">Fog 基础版</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-07-11 16:26:09 / 修改时间：16:30:04" itemprop="dateCreated datePublished" datetime="2022-07-11T16:26:09+08:00">2022-07-11</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>主美需要一个从世界中心位置向摄像机远处渐变的雾，于是就写了这么个简陋版</p>
+<pre class="line-numbers language-none"><code class="language-none">float Fixed_Fog(float3 positionWS, float fogBlend, float fogFalloff, float fogSpeed, float noiseScale)
+&#123;
+    float3 positionVS &#x3D; TransformWorldToView(positionWS);
+    float3 centerWS &#x3D; float3(0, 0, 0);
+    float3 centerVS &#x3D; TransformWorldToView(centerWS);
+    float fogMask &#x3D; smoothstep(-fogFalloff, fogFalloff, positionVS.z - centerVS.z);
+    fogMask &#x3D; (1- saturate(fogMask)) * fogBlend;
+
+    float3 noiseUVW &#x3D; positionWS * (1 &#x2F; noiseScale) + fogSpeed * _Time.y;
+    float fogNoise &#x3D; SimpleNoise3D(noiseUVW) * 0.5 + 0.5;
+
+    return  fogMask *&#x3D; fogNoise;
+&#125;
+
+
+&#x2F;&#x2F;雾
+#ifdef _FOG
+    float fogMask &#x3D; Fixed_Fog(positionWS, _FogBlend, _FogFalloff, _FogSpeed, _FogNoiseScale);
+    color &#x3D; lerp(color, _FogColor.rgb, fogMask);
+#endif<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>雾的形状用了3D噪点贴图</p>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;&#x2F;3D Noise
+float4 mod289( float4 x )
+&#123;
+    return x - floor(x * (1.0 &#x2F; 289.0)) * 289.0;
+&#125;
+
+float4 perm( float4 x )
+&#123;
+    return mod289(((x * 34.0) + 1.0) * x);
+&#125;
+
+float SimpleNoise3D( float3 p )
+&#123;
+    float3 a &#x3D; floor(p);
+    float3 d &#x3D; p - a;
+    d &#x3D; d * d * (3.0 - 2.0 * d);
+    float4 b &#x3D; a.xxyy + float4(0.0, 1.0, 0.0, 1.0);
+    float4 k1 &#x3D; perm(b.xyxy);
+    float4 k2 &#x3D; perm(k1.xyxy + b.zzww);
+    float4 c &#x3D; k2 + a.zzzz;
+    float4 k3 &#x3D; perm(c);
+    float4 k4 &#x3D; perm(c + 1.0);
+    float4 o1 &#x3D; frac(k3 * (1.0 &#x2F; 41.0));
+    float4 o2 &#x3D; frac(k4 * (1.0 &#x2F; 41.0));
+    float4 o3 &#x3D; o2 * d.z + o1 * (1.0 - d.z);
+    float2 o4 &#x3D; o3.yw * d.x + o3.xz * (1.0 - d.x);
+    return o4.y * d.y + o4.x * (1.0 - d.y);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 

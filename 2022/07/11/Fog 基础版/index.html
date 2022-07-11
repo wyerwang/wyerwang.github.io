@@ -20,27 +20,27 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"wyerwang.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="法线方向加上灯光方向取负，再点乘视角方向，模拟次表面散射；_NormalInfluence控制法线对方向影响的强度，取值0——1；贴图采样_SSSMap控制散射范围 &#x2F;&#x2F;SSS #ifdef _SSS     float3 viewDirWS &#x3D; GetWorldSpaceNormalizeViewDir(positionWS);     float subsur">
+    <meta name="description" content="主美需要一个从世界中心位置向摄像机远处渐变的雾，于是就写了这么个简陋版 float Fixed_Fog(float3 positionWS, float fogBlend, float fogFalloff, float fogSpeed, float noiseScale) &amp;#123;     float3 positionVS &#x3D; TransformWorldToView(posi">
 <meta property="og:type" content="article">
-<meta property="og:title" content="移动端模拟SSS效果">
-<meta property="og:url" content="http://wyerwang.github.io/2022/07/09/%E7%A7%BB%E5%8A%A8%E7%AB%AFSSS%E6%95%88%E6%9E%9C/index.html">
+<meta property="og:title" content="Fog 基础版">
+<meta property="og:url" content="http://wyerwang.github.io/2022/07/11/Fog%20%E5%9F%BA%E7%A1%80%E7%89%88/index.html">
 <meta property="og:site_name" content="咸鱼的梦想">
-<meta property="og:description" content="法线方向加上灯光方向取负，再点乘视角方向，模拟次表面散射；_NormalInfluence控制法线对方向影响的强度，取值0——1；贴图采样_SSSMap控制散射范围 &#x2F;&#x2F;SSS #ifdef _SSS     float3 viewDirWS &#x3D; GetWorldSpaceNormalizeViewDir(positionWS);     float subsur">
+<meta property="og:description" content="主美需要一个从世界中心位置向摄像机远处渐变的雾，于是就写了这么个简陋版 float Fixed_Fog(float3 positionWS, float fogBlend, float fogFalloff, float fogSpeed, float noiseScale) &amp;#123;     float3 positionVS &#x3D; TransformWorldToView(posi">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2022-07-09T01:31:16.109Z">
-<meta property="article:modified_time" content="2022-07-11T07:41:56.490Z">
+<meta property="article:published_time" content="2022-07-11T08:26:09.609Z">
+<meta property="article:modified_time" content="2022-07-11T08:30:04.906Z">
 <meta property="article:author" content="咸鱼">
 <meta name="twitter:card" content="summary">
 
 
-<link rel="canonical" href="http://wyerwang.github.io/2022/07/09/%E7%A7%BB%E5%8A%A8%E7%AB%AFSSS%E6%95%88%E6%9E%9C/">
+<link rel="canonical" href="http://wyerwang.github.io/2022/07/11/Fog%20%E5%9F%BA%E7%A1%80%E7%89%88/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://wyerwang.github.io/2022/07/09/%E7%A7%BB%E5%8A%A8%E7%AB%AFSSS%E6%95%88%E6%9E%9C/","path":"2022/07/09/移动端SSS效果/","title":"移动端模拟SSS效果"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://wyerwang.github.io/2022/07/11/Fog%20%E5%9F%BA%E7%A1%80%E7%89%88/","path":"2022/07/11/Fog 基础版/","title":"Fog 基础版"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>移动端模拟SSS效果 | 咸鱼的梦想</title>
+<title>Fog 基础版 | 咸鱼的梦想</title>
   
 
 
@@ -160,7 +160,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://wyerwang.github.io/2022/07/09/%E7%A7%BB%E5%8A%A8%E7%AB%AFSSS%E6%95%88%E6%9E%9C/">
+    <link itemprop="mainEntityOfPage" href="http://wyerwang.github.io/2022/07/11/Fog%20%E5%9F%BA%E7%A1%80%E7%89%88/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -173,12 +173,12 @@
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="移动端模拟SSS效果 | 咸鱼的梦想">
+      <meta itemprop="name" content="Fog 基础版 | 咸鱼的梦想">
       <meta itemprop="description" content="">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          移动端模拟SSS效果
+          Fog 基础版
         </h1>
 
         <div class="post-meta-container">
@@ -188,15 +188,9 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
+      
 
-      <time title="创建时间：2022-07-09 09:31:16" itemprop="dateCreated datePublished" datetime="2022-07-09T09:31:16+08:00">2022-07-09</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-07-11 15:41:56" itemprop="dateModified" datetime="2022-07-11T15:41:56+08:00">2022-07-11</time>
+      <time title="创建时间：2022-07-11 16:26:09 / 修改时间：16:30:04" itemprop="dateCreated datePublished" datetime="2022-07-11T16:26:09+08:00">2022-07-11</time>
     </span>
 
   
@@ -209,17 +203,57 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <img src = "https://github.com/wyerwang/wyerwang.github.io/blob/main/imgs/SSS.jpg?raw=true">
+        <p>主美需要一个从世界中心位置向摄像机远处渐变的雾，于是就写了这么个简陋版</p>
+<pre class="line-numbers language-none"><code class="language-none">float Fixed_Fog(float3 positionWS, float fogBlend, float fogFalloff, float fogSpeed, float noiseScale)
+&#123;
+    float3 positionVS &#x3D; TransformWorldToView(positionWS);
+    float3 centerWS &#x3D; float3(0, 0, 0);
+    float3 centerVS &#x3D; TransformWorldToView(centerWS);
+    float fogMask &#x3D; smoothstep(-fogFalloff, fogFalloff, positionVS.z - centerVS.z);
+    fogMask &#x3D; (1- saturate(fogMask)) * fogBlend;
 
-<p>法线方向加上灯光方向取负，再点乘视角方向，模拟次表面散射；<br>_NormalInfluence控制法线对方向影响的强度，取值0——1；<br>贴图采样_SSSMap控制散射范围</p>
-<pre class="line-numbers language-none"><code class="language-none">&#x2F;&#x2F;SSS
-#ifdef _SSS
-    float3 viewDirWS &#x3D; GetWorldSpaceNormalizeViewDir(positionWS);
-    float subsurface &#x3D; max(dot(viewDirWS, -normalize(normalWS * _NormalInfluence + lightDir)), 0.001);
-    float subsurfaceMask &#x3D; lerp(1, SAMPLE_TEXTURE2D(_SSSMap, sampler_SSSMap, IN.uv).r, _SSSMaskBlend);
-    half3 SSSColor &#x3D; _SSSColor.rgb * pow(subsurface, _SSSFalloff) * _SSSIntensity * subsurfaceMask;
-    albedo +&#x3D; SSSColor;
-#endif<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+    float3 noiseUVW &#x3D; positionWS * (1 &#x2F; noiseScale) + fogSpeed * _Time.y;
+    float fogNoise &#x3D; SimpleNoise3D(noiseUVW) * 0.5 + 0.5;
+
+    return  fogMask *&#x3D; fogNoise;
+&#125;
+
+
+&#x2F;&#x2F;雾
+#ifdef _FOG
+    float fogMask &#x3D; Fixed_Fog(positionWS, _FogBlend, _FogFalloff, _FogSpeed, _FogNoiseScale);
+    color &#x3D; lerp(color, _FogColor.rgb, fogMask);
+#endif<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>雾的形状用了3D噪点贴图</p>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;&#x2F;3D Noise
+float4 mod289( float4 x )
+&#123;
+    return x - floor(x * (1.0 &#x2F; 289.0)) * 289.0;
+&#125;
+
+float4 perm( float4 x )
+&#123;
+    return mod289(((x * 34.0) + 1.0) * x);
+&#125;
+
+float SimpleNoise3D( float3 p )
+&#123;
+    float3 a &#x3D; floor(p);
+    float3 d &#x3D; p - a;
+    d &#x3D; d * d * (3.0 - 2.0 * d);
+    float4 b &#x3D; a.xxyy + float4(0.0, 1.0, 0.0, 1.0);
+    float4 k1 &#x3D; perm(b.xyxy);
+    float4 k2 &#x3D; perm(k1.xyxy + b.zzww);
+    float4 c &#x3D; k2 + a.zzzz;
+    float4 k3 &#x3D; perm(c);
+    float4 k4 &#x3D; perm(c + 1.0);
+    float4 o1 &#x3D; frac(k3 * (1.0 &#x2F; 41.0));
+    float4 o2 &#x3D; frac(k4 * (1.0 &#x2F; 41.0));
+    float4 o3 &#x3D; o2 * d.z + o1 * (1.0 - d.z);
+    float2 o4 &#x3D; o3.yw * d.x + o3.xz * (1.0 - d.x);
+    return o4.y * d.y + o4.x * (1.0 - d.y);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </div>
 
     
@@ -232,14 +266,11 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2022/06/19/%E8%87%AA%E5%B7%B1%E5%86%99%E4%B8%80%E4%B8%AAPBR/" rel="prev" title="PBR移动端优化【URP】">
-                  <i class="fa fa-chevron-left"></i> PBR移动端优化【URP】
+                <a href="/2022/07/11/%E6%8A%95%E5%B0%84%E6%A8%A1%E6%8B%9F%E6%A0%91%E6%9E%97%E9%98%B4%E5%BD%B1/" rel="prev" title="模拟投射阴影">
+                  <i class="fa fa-chevron-left"></i> 模拟投射阴影
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/2022/07/11/%E6%8A%95%E5%B0%84%E6%A8%A1%E6%8B%9F%E6%A0%91%E6%9E%97%E9%98%B4%E5%BD%B1/" rel="next" title="模拟投射阴影">
-                  模拟投射阴影 <i class="fa fa-chevron-right"></i>
-                </a>
             </div>
           </div>
     </footer>

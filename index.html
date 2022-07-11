@@ -191,7 +191,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-07-11 15:28:42" itemprop="dateModified" datetime="2022-07-11T15:28:42+08:00">2022-07-11</time>
+      <time title="修改时间：2022-07-11 15:40:46" itemprop="dateModified" datetime="2022-07-11T15:40:46+08:00">2022-07-11</time>
     </span>
 
   
@@ -206,7 +206,7 @@
     <div class="post-body" itemprop="articleBody">
           <img src = "https://github.com/wyerwang/wyerwang.github.io/blob/main/imgs/SSS.jpg?raw=true">
 
-<p>用视角方向点乘负的半角向量，模拟次表面散射<br>贴图采样Mask控制散射范围</p>
+<p>法线方向加上灯光方向取负，再点乘视角方向，模拟次表面散射；<br>_NormalInfluence控制法线对方向影响的强度，取值0——1；<br>贴图采样_SSSMap控制散射范围</p>
 <pre class="line-numbers language-none"><code class="language-none">&#x2F;&#x2F;SSS
 #ifdef _SSS
     float3 viewDirWS &#x3D; GetWorldSpaceNormalizeViewDir(positionWS);
